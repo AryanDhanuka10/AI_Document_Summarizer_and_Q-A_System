@@ -1,0 +1,40 @@
+# ---- Core Backend ----
+fastapi
+uvicorn[standard]
+pydantic
+python-dotenv
+loguru
+
+# ---- LLM & RAG ----
+langchain
+langchain-community
+langchain-openai
+llama-index
+llama-index-vector-stores-pinecone
+
+# ---- Vector DB ----
+pinecone-client
+
+# ---- PDF Processing ----
+pypdf
+pdfplumber
+
+# ---- Embeddings & Tokenization ----
+tiktoken
+sentence-transformers
+
+# ---- Hybrid Search ----
+rank-bm25
+scikit-learn
+numpy
+
+# ---- Re-ranking (Optional but recommended) ----
+torch
+transformers
+
+# ---- Utilities ----
+requests
+tenacity
+
+# ---- Testing ----
+pytest

@@ -1,0 +1,3 @@
+"""
+Vector metadata schemas.
+"""
