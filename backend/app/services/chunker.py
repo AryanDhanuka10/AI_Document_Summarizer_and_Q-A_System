@@ -3,18 +3,19 @@ chunker.py
 
 Why:
 -----
-LLMs perform best with semantically coherent chunks.
-Overlapping chunks reduce context fragmentation.
+Chunking is critical for retrieval accuracy.
+This implementation is compatible with modern LangChain versions.
 
 How:
 -----
-- Token-aware chunking
-- Metadata preserved per chunk
+- Uses RecursiveCharacterTextSplitter
+- Preserves page-level citation metadata
 """
 
 from typing import List, Dict
-from langchain.text_splitter import RecursiveCharacterTextSplitter
 from loguru import logger
+
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 
 def chunk_pages(
@@ -23,21 +24,21 @@ def chunk_pages(
     chunk_overlap: int = 150
 ) -> List[Dict]:
     """
-    Splits page-level text into overlapping chunks.
+    Splits page-level text into overlapping semantic chunks.
 
     Parameters
     ----------
     pages : List[Dict]
-        Output of pdf_loader.load_pdf()
+        Output from pdf_loader.load_pdf()
     chunk_size : int
-        Max tokens per chunk
+        Max characters per chunk
     chunk_overlap : int
-        Overlap between chunks
+        Overlap size to preserve context
 
     Returns
     -------
     List[Dict]
-        Chunked text with citation metadata
+        Chunked documents with citation metadata
     """
 
     splitter = RecursiveCharacterTextSplitter(
@@ -67,4 +68,3 @@ def chunk_pages(
     logger.info(f"Generated {len(chunks)} chunks")
 
     return chunks
-

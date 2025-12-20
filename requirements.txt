@@ -11,9 +11,12 @@ langchain-community
 langchain-openai
 llama-index
 llama-index-vector-stores-pinecone
+langchain-text-splitters
+
 
 # ---- Vector DB ----
-pinecone-client
+pinecone-client>=3.0.0
+
 
 # ---- PDF Processing ----
 pypdf
