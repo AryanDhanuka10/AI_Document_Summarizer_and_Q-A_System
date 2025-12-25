@@ -1,9 +1,3 @@
-Below is a **full project report** written exactly in the **emoji-heavy, production-ready, developer-centric style** you asked for, mirroring a polished **AI Chatbot report**, but adapted correctly for your **AI Document Summariser & Q/A System**.
-
-You can **directly copy-paste this into your project report / README / PDF**.
-
----
-
 # 📘 AI Document Summariser & Context-Aware Q&A System
 
 *(Production-Ready RAG Pipeline for Long-Form Documents)*
