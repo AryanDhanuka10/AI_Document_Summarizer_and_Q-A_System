@@ -1,13 +1,18 @@
+
+
 # 📘 AI Document Summariser & Context-Aware Q&A System
 
 *(Production-Ready RAG Pipeline for Long-Form Documents)*
 
 <p align="center">
-  <img src="assets/banner.png" alt="AI Document Summariser Banner" width="100%" />
+<img src="assets/banner.png" alt="AI Document Summariser Banner" width="100%" />
 </p>
 
 ---
 
+### 🌐 Live Deployment
+
+**[View Live Application](https://www.google.com/search?q=https://your-deployment-link.com)** *(Replace the link above with your actual URL)*
 
 ---
 
@@ -58,9 +63,10 @@ Recursive Chunking (Page-aware)
    ↓
 Chunk Indexing (BM25 / Vector Ready)
    ↓
-Map-Reduce Summarization
+Map-Reduce summarization strategy
    ↓
 Context-Aware Q&A with Citations
+
 ```
 
 ---
@@ -79,9 +85,9 @@ Context-Aware Q&A with Citations
 
 ### 🗺️ Map-Reduce Summarization
 
-| Phase  | Description                                                  |
-| ------ | ------------------------------------------------------------ |
-| Map    | Each chunk is summarized independently                       |
+| Phase | Description |
+| --- | --- |
+| Map | Each chunk is summarized independently |
 | Reduce | Partial summaries are merged into a final structured summary |
 
 This design ensures scalability for **large PDFs and multi-document uploads**.
@@ -90,12 +96,12 @@ This design ensures scalability for **large PDFs and multi-document uploads**.
 
 ## 📊 Summarization Modes
 
-| Mode              | Description              | Use Case       |
-| ----------------- | ------------------------ | -------------- |
-| Executive Summary | High-level overview      | Stakeholders   |
-| Technical Summary | Deep structured analysis | Engineers      |
-| Bullet Summary    | Concise points           | Quick review   |
-| Custom Length     | User-defined verbosity   | Flexible usage |
+| Mode | Description | Use Case |
+| --- | --- | --- |
+| Executive Summary | High-level overview | Stakeholders |
+| Technical Summary | Deep structured analysis | Engineers |
+| Bullet Summary | Concise points | Quick review |
+| Custom Length | User-defined verbosity | Flexible usage |
 
 ---
 
@@ -115,6 +121,7 @@ Answer: The certificate confirms successful completion of the program [Source 2]
 
 Citations:
 - certificate.pdf (Page 1)
+
 ```
 
 ---
@@ -124,9 +131,10 @@ Citations:
 * Each chunk is labeled as `[Source X]`
 * Every factual sentence ends with a citation
 * References are traceable to:
+* Filename
+* Page number
 
-  * Filename
-  * Page number
+
 
 This ensures **zero hallucination tolerance**.
 
@@ -186,6 +194,7 @@ This ensures **zero hallucination tolerance**.
 │   └── page.tsx
 │
 └── README.md
+
 ```
 
 ---
@@ -232,17 +241,18 @@ uvicorn app.main:app --reload
 cd ../frontend
 npm install
 npm run dev
+
 ```
 
 ---
 
 ## 📡 API Endpoints
 
-| Endpoint            | Method | Description               |
-| ------------------- | ------ | ------------------------- |
-| `/upload`           | POST   | Upload PDF files          |
-| `/summarize/upload` | POST   | Generate document summary |
-| `/chat`             | POST   | Context-aware Q&A         |
+| Endpoint | Method | Description |
+| --- | --- | --- |
+| `/upload` | POST | Upload PDF files |
+| `/summarize/upload` | POST | Generate document summary |
+| `/chat` | POST | Context-aware Q&A |
 
 ---
 
