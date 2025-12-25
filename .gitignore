@@ -205,3 +205,10 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# ---- PDF Files ----
+*.pdf
+backend/uploaded_docs/
+backend/data/raw_docs/
+backend/tests/sample.pdf
+EOF
