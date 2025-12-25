@@ -1,0 +1,113 @@
+import { UploadResponse, ChatResponse, SummaryResponse } from '@/types';
+import { getSessionId } from './utils';
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000';
+
+/**
+ * Upload multiple PDFs
+ * Endpoint: POST /upload
+ * FormData: session_id + files
+ */
+export async function uploadMultipleDocuments(files: File[]): Promise<UploadResponse[]> {
+  const sessionId = getSessionId();
+  const formData = new FormData();
+  
+  // Add session_id as form field
+  formData.append('session_id', sessionId);
+  
+  // Add all files
+  files.forEach(file => {
+    formData.append('files', file);
+  });
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/upload`, {
+      method: 'POST',
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Upload failed (${response.status}): ${errorText}`);
+    }
+
+    const data = await response.json();
+    return Array.isArray(data) ? data : [data];
+  } catch (error) {
+    if (error instanceof TypeError && error.message === 'Failed to fetch') {
+      throw new Error('Backend is unreachable at ' + API_BASE_URL);
+    }
+    throw error;
+  }
+}
+
+/**
+ * Summarize uploaded documents
+ * Endpoint: POST /summarize/upload?session_id=<UUID>
+ * CRITICAL: Query parameter, EMPTY body
+ */
+export async function summarizeUploadedDocuments(): Promise<SummaryResponse> {
+  const sessionId = getSessionId();
+  
+  try {
+    const response = await fetch(`${API_BASE_URL}/summarize/upload?session_id=${sessionId}`, {
+      method: 'POST',
+      // NO body - empty request
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Summarization failed (${response.status}): ${errorText}`);
+    }
+
+    const data = await response.json();
+    return {
+      summary: data.summary || '',
+      citations: data.citations || [],
+      document_count: data.document_count || 0,
+    };
+  } catch (error) {
+    if (error instanceof TypeError && error.message === 'Failed to fetch') {
+      throw new Error('Backend is unreachable');
+    }
+    throw error;
+  }
+}
+
+/**
+ * Ask a question via RAG-based chat
+ * Endpoint: POST /chat
+ * Body: { session_id, question }
+ */
+export async function askQuestion(question: string): Promise<ChatResponse> {
+  const sessionId = getSessionId();
+  
+  try {
+    const response = await fetch(`${API_BASE_URL}/chat`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        session_id: sessionId,
+        question: question,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Chat failed (${response.status}): ${errorText}`);
+    }
+
+    const data = await response.json();
+    return {
+      answer: data.answer || '',
+      citations: data.citations || [],
+    };
+  } catch (error) {
+    if (error instanceof TypeError && error.message === 'Failed to fetch') {
+      throw new Error('Backend is unreachable');
+    }
+    throw error;
+  }
+}

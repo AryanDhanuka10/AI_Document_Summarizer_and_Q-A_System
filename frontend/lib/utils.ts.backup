@@ -1,0 +1,37 @@
+/**
+ * Session Management Utilities
+ * Handles session_id generation and localStorage persistence
+ */
+
+const SESSION_KEY = 'session_id';
+
+/**
+ * Get or create session ID
+ * - Checks localStorage first
+ * - Generates new UUID if not found
+ * - Stores in localStorage for reuse
+ */
+export function getSessionId(): string {
+  if (typeof window === 'undefined') {
+    // Server-side: return empty (will be set on client)
+    return '';
+  }
+
+  let sessionId = localStorage.getItem(SESSION_KEY);
+  
+  if (!sessionId) {
+    sessionId = crypto.randomUUID();
+    localStorage.setItem(SESSION_KEY, sessionId);
+  }
+  
+  return sessionId;
+}
+
+/**
+ * Clear session (for testing/reset)
+ */
+export function clearSession(): void {
+  if (typeof window !== 'undefined') {
+    localStorage.removeItem(SESSION_KEY);
+  }
+}

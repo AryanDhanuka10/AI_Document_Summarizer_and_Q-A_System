@@ -1,5 +1,11 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
+# CRITICAL: Force include these directories (parent .gitignore blocks lib/)
+!lib/
+!lib/**
+!types/
+!types/**
+
 # dependencies
 /node_modules
 /.pnp
