@@ -13,41 +13,44 @@ How:
 """
 
 from loguru import logger
+
 from app.db.pinecone_client import get_pinecone_index
 from app.services.embeddings import embed_texts
 
 
-def index_chunks(chunks: list[dict], batch_size: int = 50):
+def index_chunks(chunks: list[dict], batch_size: int = 50) -> None:
     """
     Indexes document chunks into Pinecone.
 
     Parameters
     ----------
     chunks : list[dict]
-        Output from chunker
+        Chunked document data with metadata.
+    batch_size : int
+        Number of chunks per Pinecone upsert batch.
     """
 
     index = get_pinecone_index()
     logger.info(f"Indexing {len(chunks)} chunks")
 
     for i in range(0, len(chunks), batch_size):
-        batch = chunks[i:i + batch_size]
+        batch = chunks[i : i + batch_size]
 
         texts = [c["text"] for c in batch]
         vectors = embed_texts(texts)
 
-        pinecone_vectors = []
-
-        for chunk, vector in zip(batch, vectors):
-            pinecone_vectors.append((
+        pinecone_vectors = [
+            (
                 chunk["chunk_id"],
                 vector,
                 {
                     "source_file": chunk["source_file"],
                     "page_number": chunk["page_number"],
-                    "text": chunk["text"]
-                }
-            ))
+                    "text": chunk["text"],
+                },
+            )
+            for chunk, vector in zip(batch, vectors)
+        ]
 
         try:
             index.upsert(vectors=pinecone_vectors)

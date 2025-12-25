@@ -1,52 +1,35 @@
-"""
-pinecone_client.py
-
-Why:
------
-Handles Pinecone initialization using the modern
-Pinecone SDK (v3+). Avoids deprecated APIs.
-
-How:
------
-- Uses Pinecone client object
-- Idempotent index creation
-- ServerlessSpec-based configuration
-"""
-
-from loguru import logger
 from pinecone import Pinecone, ServerlessSpec
-from app.core.config import PINECONE_API_KEY, PINECONE_ENV
+from loguru import logger
 
-INDEX_NAME = "rag-documents"
-EMBEDDING_DIM = 384  # all-MiniLM-L6-v2
+from app.core.config import (
+    PINECONE_API_KEY,
+    PINECONE_ENV,
+    PINECONE_INDEX_NAME,
+)
+
+pc = Pinecone(api_key=PINECONE_API_KEY)
 
 
 def get_pinecone_index():
     """
-    Initializes Pinecone client and returns an index instance.
+    Initializes and returns a Pinecone index.
     """
 
     try:
-        pc = Pinecone(api_key=PINECONE_API_KEY)
-
-        existing_indexes = pc.list_indexes().names()
-
-        if INDEX_NAME not in existing_indexes:
-            logger.info("Creating Pinecone index (serverless)...")
-
+        if PINECONE_INDEX_NAME not in pc.list_indexes().names():
             pc.create_index(
-                name=INDEX_NAME,
-                dimension=EMBEDDING_DIM,
+                name=PINECONE_INDEX_NAME,
+                dimension=384,
                 metric="cosine",
                 spec=ServerlessSpec(
                     cloud="aws",
-                    region=PINECONE_ENV
-                )
+                    region=PINECONE_ENV,
+                ),
             )
 
         logger.info("Pinecone index ready")
-        return pc.Index(INDEX_NAME)
+        return pc.Index(PINECONE_INDEX_NAME)
 
     except Exception as e:
-        logger.exception("Failed to initialize Pinecone")
+        logger.error("Failed to initialize Pinecone", exc_info=e)
         raise

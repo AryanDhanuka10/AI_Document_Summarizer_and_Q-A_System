@@ -1,99 +1,67 @@
 """
 retriever.py
 
-Why:
------
-Vector search alone misses exact terms.
-Keyword search alone misses semantics.
-Hybrid retrieval gives the best of both.
+Hybrid retrieval (BM25-only):
 
-How:
------
-- Semantic search via Pinecone
-- Keyword search via BM25
-- Score normalization + merge
+- Keyword-based retrieval using BM25
+- Session-safe (in-memory chunks only)
+- Schema-consistent output for downstream RAG
 """
 
 from typing import List, Dict
+import numpy as np
 from loguru import logger
 from rank_bm25 import BM25Okapi
-import numpy as np
-
-from app.services.embeddings import embed_texts
-from app.db.pinecone_client import get_pinecone_index
 
 
 class HybridRetriever:
+    """
+    Session-safe retriever.
+
+    Each result contains:
+    - score: float
+    - metadata: FULL chunk dict
+    """
+
     def __init__(self, chunks: List[Dict]):
-        """
-        chunks: all indexed chunks (for BM25)
-        """
+        if not chunks:
+            raise ValueError("HybridRetriever initialized with empty chunks")
+
         self.chunks = chunks
-        self.texts = [c["text"] for c in chunks]
-        self.bm25 = BM25Okapi([t.split() for t in self.texts])
+        self.texts = [c.get("text", "") for c in chunks]
 
-    def semantic_search(self, query: str, top_k: int = 10) -> List[Dict]:
-        index = get_pinecone_index()
-        vector = embed_texts([query])[0]
-
-        results = index.query(
-            vector=vector,
-            top_k=top_k,
-            include_metadata=True
+        self.bm25 = BM25Okapi(
+            [text.split() for text in self.texts]
         )
 
-        hits = []
-        for match in results["matches"]:
-            hits.append({
-                "score": match["score"],
-                "metadata": match["metadata"]
-            })
+    def search(self, query: str, top_k: int = 8) -> List[Dict]:
+        """
+        Perform keyword-based retrieval using BM25.
+        """
 
-        return hits
+        if not query.strip():
+            logger.warning("Empty query passed to retriever")
+            return []
 
-    def keyword_search(self, query: str, top_k: int = 10) -> List[Dict]:
         scores = self.bm25.get_scores(query.split())
         top_indices = np.argsort(scores)[::-1][:top_k]
 
-        hits = []
+        results: List[Dict] = []
+
         for idx in top_indices:
-            hits.append({
-                "score": scores[idx],
-                "metadata": self.chunks[idx]
-            })
+            if scores[idx] <= 0:
+                continue
 
-        return hits
-
-    def hybrid_search(self, query: str, top_k: int = 5) -> List[Dict]:
-        semantic_hits = self.semantic_search(query, top_k=top_k * 2)
-        keyword_hits = self.keyword_search(query, top_k=top_k * 2)
-
-        combined = {}
-
-        for hit in semantic_hits + keyword_hits:
-            key = (
-                hit["metadata"]["source_file"],
-                hit["metadata"]["page_number"],
-                hit["metadata"]["text"][:50]
+            results.append(
+                {
+                    "score": float(scores[idx]),
+                    "metadata": self.chunks[idx],
+                }
             )
-            combined[key] = combined.get(key, 0) + hit["score"]
 
-        sorted_hits = sorted(
-            combined.items(),
-            key=lambda x: x[1],
-            reverse=True
+        logger.info(
+            f"BM25 returned {len(results)} chunks "
+            f"for query='{query[:50]}'"
         )
 
-        final_hits = []
-        for key, score in sorted_hits[:top_k]:
-            final_hits.append({
-                "score": score,
-                "metadata": {
-                    "source_file": key[0],
-                    "page_number": key[1],
-                    "text": key[2]
-                }
-            })
-
-        logger.info(f"Hybrid search returned {len(final_hits)} chunks")
-        return final_hits
+        return results

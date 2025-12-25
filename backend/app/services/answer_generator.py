@@ -1,51 +1,105 @@
+# backend/app/services/answer_generator.py
+
 """
-answer_generator.py
-
-Why:
------
-LLMs can fail due to quota or network issues.
-The system must degrade gracefully.
-
-How:
------
-- Try LLM
-- If it fails, return extractive fallback
+Groq-based answer & summary generation.
+STRICTLY document-grounded with forced citations.
 """
 
+from typing import List, Dict
 from loguru import logger
-from app.services.llm_factory import get_llm
-from app.utils.prompts import ANSWER_PROMPT
+
+from langchain_core.messages import SystemMessage, HumanMessage
+from app.services.llm import get_llm
 
 
-def generate_answer(question: str, evidence_chunks: list[dict]) -> str:
+def generate_answer(
+    prompt: str,
+    evidence_chunks: List[Dict],
+    mode: str = "qa",
+) -> str:
     """
-    Generates a grounded answer using retrieved evidence.
+    Generate an answer or summary strictly from document evidence.
     """
 
-    context = "\n\n".join(
-        c["metadata"]["text"] for c in evidence_chunks
-    )
+    if not evidence_chunks:
+        return "No relevant content found in the uploaded documents."
 
-    prompt = ANSWER_PROMPT.format(
-        context=context,
-        question=question
-    )
+    # -----------------------------
+    # Source-labeled context
+    # -----------------------------
+    context_blocks: List[str] = []
 
-    try:
-        llm = get_llm(temperature=0.0)
-        response = llm.invoke(prompt)
-        return response.content.strip()
-
-    except Exception as e:
-        logger.error(f"LLM generation failed: {e}")
-
-        # ---- Fallback: Extractive Answer ----
-        fallback = (
-            "⚠️ LLM unavailable. Relevant document excerpts:\n\n"
-            + "\n\n".join(
-                f"- {c['metadata']['text'][:300]}..."
-                for c in evidence_chunks
-            )
+    for idx, chunk in enumerate(evidence_chunks):
+        text = (
+            chunk.get("metadata", {}).get("text")
+            or chunk.get("text", "")
         )
 
-        return fallback
+        if text and text.strip():
+            context_blocks.append(
+                f"[Source {idx + 1}]\n{text.strip()}"
+            )
+
+    if not context_blocks:
+        return "No relevant content found in the uploaded documents."
+
+    max_blocks = 15 if mode == "qa" else 60
+    context = "\n\n".join(context_blocks[:max_blocks])
+
+    llm = get_llm()
+
+    # =============================
+    # SUMMARY MODE
+    # =============================
+    if mode == "summary":
+        system_prompt = f"""
+You are an expert technical analyst.
+
+Use ONLY the provided context.
+
+Every factual sentence MUST end with a citation [Source X].
+
+If information is missing, explicitly state:
+"Information not available in provided documents."
+
+CONTEXT:
+{context}
+"""
+        user_prompt = prompt
+
+    # =============================
+    # Q&A MODE
+    # =============================
+    else:
+        system_prompt = f"""
+You are a Document Q&A Engine.
+
+RULES:
+- Use ONLY the provided context.
+- EVERY sentence MUST end with [Source X].
+- If the answer is missing, say:
+  "I'm sorry, the documents do not contain information regarding this."
+
+FORMAT:
+Direct Answer:
+Explanation:
+Sources Used:
+
+CONTEXT:
+{context}
+"""
+        user_prompt = prompt
+
+    try:
+        response = llm.invoke(
+            [
+                SystemMessage(content=system_prompt),
+                HumanMessage(content=user_prompt),
+            ]
+        )
+
+        return response.content.strip()
+
+    except Exception:
+        logger.exception("Groq LLM failed")
+        return "LLM failed while processing the document."

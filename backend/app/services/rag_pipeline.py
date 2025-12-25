@@ -1,10 +1,10 @@
+# backend/app/services/rag_pipeline.py
+
 from app.services.retriever import HybridRetriever
-from app.services.reranker import rerank
 from app.services.citation import build_citations
 from app.services.answer_generator import generate_answer
 from app.services.memory import ChatMemory
 from app.services.query_rewriter import rewrite_query
-
 
 memory = ChatMemory()
 
@@ -12,32 +12,39 @@ memory = ChatMemory()
 def answer_question(
     session_id: str,
     question: str,
-    all_chunks: list[dict]
+    all_chunks: list[dict],
 ) -> dict:
     """
-    Full RAG pipeline with memory and citations.
+    Full RAG pipeline with memory, retrieval, QA, and citations.
     """
 
     history = memory.get_history(session_id)
     standalone_query = rewrite_query(history, question)
 
     retriever = HybridRetriever(all_chunks)
-    candidates = retriever.hybrid_search(standalone_query)
-    top_chunks = rerank(standalone_query, candidates)
+    candidate_chunks = retriever.search(
+        query=standalone_query,
+        top_k=12,
+    )
 
-    if not top_chunks:
+    if not candidate_chunks:
         return {
-            "answer": "The answer is not available in the provided documents.",
-            "citations": []
+            "answer": "I could not find this information in the uploaded documents.",
+            "citations": [],
         }
 
-    answer = generate_answer(standalone_query, top_chunks)
-    citations = build_citations(top_chunks)
+    answer = generate_answer(
+        prompt=standalone_query,
+        evidence_chunks=candidate_chunks,
+        mode="qa",
+    )
+
+    citations = build_citations(candidate_chunks)
 
     memory.add_message(session_id, "user", question)
     memory.add_message(session_id, "assistant", answer)
 
     return {
         "answer": answer,
-        "citations": citations
+        "citations": citations,
     }

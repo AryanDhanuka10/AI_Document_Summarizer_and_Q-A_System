@@ -1,31 +1,21 @@
 """
 embeddings.py
 
-Why:
------
-Embeddings determine retrieval quality.
-We use a deterministic, lightweight model.
-
-How:
------
-SentenceTransformers (CPU-safe, fast).
+Local embedding layer (OpenAI-free).
 """
 
+from typing import List
 from sentence_transformers import SentenceTransformer
-from loguru import logger
 
-_MODEL_NAME = "all-MiniLM-L6-v2"
-_model = SentenceTransformer(_MODEL_NAME)
+_model = SentenceTransformer("all-MiniLM-L6-v2")
 
 
-def embed_texts(texts: list[str]) -> list[list[float]]:
+def embed_texts(texts: List[str]) -> List[list[float]]:
     """
-    Converts a list of texts into vector embeddings.
+    Generates normalized embeddings for a list of texts.
     """
-    try:
-        vectors = _model.encode(texts, show_progress_bar=False)
-        return vectors.tolist()
 
-    except Exception as e:
-        logger.exception("Embedding generation failed")
-        raise
+    return _model.encode(
+        texts,
+        normalize_embeddings=True,
+    ).tolist()

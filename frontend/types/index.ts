@@ -1,15 +1,15 @@
 export interface Document {
     id: string;
-    name: string;
+    filename: string;
+    sessionId: string;
+    pageCount: number;
     uploadedAt: string;
-    size: number;
-    pageCount?: number;
+    selected: boolean;
 }
 
 export interface Citation {
-    documentId: string;
-    documentName: string;
-    page: number;
+    source_file: string;
+    page_number: number;
     text?: string;
 }
 
@@ -22,12 +22,25 @@ export interface Message {
 }
 
 export interface UploadResponse {
-    success: boolean;
-    document?: Document;
-    error?: string;
+    filename: string;
+    session_id: string;
+    page_count: number;
+}
+
+export interface ChatRequest {
+    session_id: string;
+    question: string;
 }
 
 export interface ChatResponse {
-    message: string;
+    answer: string;
     citations?: Citation[];
+    chunk_count?: number;
 }
+
+export interface SummaryResponse {
+    summary: string;
+    citations?: Citation[];
+    document_count?: number;
+}
+

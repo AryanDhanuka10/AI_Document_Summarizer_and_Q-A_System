@@ -8,7 +8,7 @@ loguru
 # ---- LLM & RAG ----
 langchain
 langchain-community
-langchain-openai
+
 llama-index
 llama-index-vector-stores-pinecone
 langchain-text-splitters
