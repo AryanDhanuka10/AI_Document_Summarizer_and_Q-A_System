@@ -1,0 +1,19 @@
+# Local environments
+.venv/
+venv/
+node_modules/
+
+# Build artifacts
+dist/
+build/
+.next/
+out/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Large AI models/data (if any)
+*.bin
+*.pth
+*.onnx
