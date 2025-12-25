@@ -1,19 +1,19 @@
-# Local environments
+# Ignore local environments
 .venv/
 venv/
 node_modules/
 
-# Build artifacts
-dist/
-build/
-.next/
-out/
+# Ignore frontend build artifacts (Vercel builds its own)
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/dist/
 
-# Python cache
-__pycache__/
+# Ignore Python caches
+**/__pycache__/
 *.pyc
 
-# Large AI models/data (if any)
-*.bin
-*.pth
-*.onnx
+# Ignore large media/docs that don't need to be in the code
+assets/
+*.pdf
+*.mp4
