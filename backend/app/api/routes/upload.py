@@ -1,4 +1,6 @@
-from fastapi import APIRouter, UploadFile, File, HTTPException, Query
+# backend/app/routes/upload.py
+
+from fastapi import APIRouter, UploadFile, File, HTTPException
 import os
 import uuid
 import shutil
@@ -15,21 +17,20 @@ UPLOAD_DIR = "uploaded_docs"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 
-@router.post("/")
+@router.post("/upload")  # ✅ FIXED: NO trailing slash
 async def upload_documents(
     session_id: str,
     files: list[UploadFile] = File(...)
 ):
-
     """
     Uploads multiple PDFs, processes them, and indexes them.
     Session-safe.
     """
 
     if not files:
-        raise HTTPException(400, "No files provided")
+        raise HTTPException(status_code=400, detail="No files provided")
 
-    # 🔴 CRITICAL FIX: clear old session data
+    # Clear old session data
     document_store.clear_session(session_id)
 
     processed_files = []
@@ -37,7 +38,8 @@ async def upload_documents(
     for file in files:
         if not file.filename.lower().endswith(".pdf"):
             raise HTTPException(
-                400, f"Invalid file type: {file.filename}"
+                status_code=400,
+                detail=f"Invalid file type: {file.filename}",
             )
 
         safe_name = f"{uuid.uuid4()}-{file.filename}"
